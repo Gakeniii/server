@@ -142,6 +142,7 @@ class PatientResource(Resource):
                         'id': appointment.doctor.id,
                         'name': appointment.doctor.name,
                         'email': appointment.doctor.email,
+                        # 'specialty': appointment.doctor.specialty.specialty if appointment.doctor.specialty else None
                     }
                 } for appointment in patient.appointments]
             }
