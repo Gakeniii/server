@@ -147,12 +147,17 @@ class PatientResource(Resource):
                 } for appointment in patient.appointments]
             }
         patients = Patient.query.all()
-        return [{
-            'id': patient.id,
-            'name': patient.name,
-            'phone_no': patient.phone_no,
-            'age': patient.age
-        } for patient in patients]
+        patient_list = []
+
+        for patient in patients:
+            patient_list.append({
+            "id": patient.id,
+            "name": patient.name,
+            "appointments": [
+                {"diagnosis": appt.diagnosis, "date": appt.date} for appt in patient.appointments
+            ]
+        })
+        return jsonify(patient_list)
     
 
     def post(self):
@@ -238,7 +243,7 @@ class AppointmentResource(Resource):
             date_object = datetime.strptime(date_string, "%m/%d/%y").date()
             
         except ValueError:
-            return {'message': 'Invalid date format. Please use MM/DD/YY.'}, 400
+            return {'message': 'Invalid date format. Please use MM/DD/YYYY.'}, 400
 
         time_string = data.get('time')
     
@@ -249,6 +254,15 @@ class AppointmentResource(Resource):
             time_object = datetime.strptime(time_string, "%I:%M%p").time()
         except ValueError:
             return {'message': 'Invalid time format. Please use HH:MMAM/PM.'}, 400
+        
+        patient = Patient.query.filter_by(name=data.get('patient_name')).first()
+        if not patient:
+            return {'message': 'Invalid patient name'}, 400
+
+        
+        doctor = Doctor.query.filter_by(name=data.get('doctor_name')).first()
+        if not doctor:
+            return {'message': 'Invalid doctor name'}, 400
 
     
         appointment = Appointment(
@@ -265,10 +279,15 @@ class AppointmentResource(Resource):
         db.session.add(appointment)
         db.session.commit()
         return {
-            'message': 'Appointment created',
+            'message': 'Appointment created successfully',
             'appointment': appointment.id,
             'date': appointment.date.strftime("%m/%d/%Y"),  # Format the date object as a string
-            'time': appointment.time.strftime("%I:%M%p")   # Format the time object as a string
+            'time': appointment.time.strftime("%I:%M%p"),   # Format the time object as a string
+            'patient_name': patient.name,
+            'doctor_name': doctor.name,
+            'patient_id': patient.id,
+            'doctor_id': doctor.id
+
         }, 201
     
     def patch(self, appointment_id):
@@ -279,7 +298,7 @@ class AppointmentResource(Resource):
         try:
             appointment.date = datetime.strptime(date_string, "%m/%d/%Y").date()
         except ValueError:
-            return {'message': 'Invalid date format. Please use MM/DD/YYYY.'}, 400
+            return {'message': 'Invalid date format. Please use MM/DD/YY.'}, 400
         time_string = data.get('time', appointment.time.strftime("%I:%M%p"))
         try:
             appointment.time = datetime.strptime(time_string, "%I:%M%p").time()
@@ -434,35 +453,6 @@ api.add_resource(PatientResource, '/patients', '/patients/<int:patient_id>')
 api.add_resource(AppointmentResource, '/appointments', '/appointments/<int:appointment_id>')
 api.add_resource(SpecialtyResource, '/specialties', '/specialties/<int:specialty_id>')
 api.add_resource(PaymentOptionResource, '/payment-options', '/payment-options/<int:payment_option_id>')
-
-
-
-# @login_manager.user_loader
-# def load_user(user_id):
-#     return Administrator.query.get(int(user_id))
-
-# @app.route('/login', methods=['GET', 'POST'])
-# def login():
-#     if request.method == 'POST':
-#         email = request.form['email']
-#         password = request.form['password']
-        
-#         admin = Administrator.query.filter_by(email=email).first()
-        
-#         if admin and admin.check_password(password):
-#             login_user(admin)
-#             return redirect(url_for('home'))  # Redirect to dashboard or home page
-#         else:
-#             return 'Invalid email or password'
-
-#     return render_template('login.html')
-
-# @app.route('/logout')
-# def logout():
-#     logout_user()
-#     return redirect(url_for('login'))  # Redirect to login page after logout
-
-
 
 
 if __name__ == '__main__':
