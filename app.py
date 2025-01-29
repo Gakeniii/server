@@ -197,13 +197,11 @@ class AppointmentResource(Resource):
                 'diagnosis': appointment.diagnosis,
                 'patient_id': appointment.patient_id,
                 'patient': {
-                    'id': appointment.patient.id,
                     'name': appointment.patient.name,
                     'age': appointment.patient.age
                 },
                 'doctor_id': appointment.doctor_id,
                 'doctor': {
-                    'id': appointment.doctor.id,
                     'name': appointment.doctor.name,
                     'email': appointment.doctor.email,
                 }
@@ -218,9 +216,12 @@ class AppointmentResource(Resource):
             'status': appointment.status,
             'diagnosis': appointment.diagnosis,
             'patient_id': appointment.patient_id,
+            'patient': {
+                'name': appointment.patient.name,
+                'age': appointment.patient.age
+            },
             'doctor_id': appointment.doctor_id,
             'doctor': {
-                    'id': appointment.doctor.id,
                     'name': appointment.doctor.name,
                     'email': appointment.doctor.email,
                 }
