@@ -144,8 +144,22 @@ class PatientResource(Resource):
                         'email': appointment.doctor.email,
                         'specialty': appointment.doctor.specialty.specialty if appointment.doctor.specialty else None
                     }
-                } for appointment in patient.appointments]
-            }
+                } 
+                for appointment in patient.appointments
+            ],
+            'payment_options': [
+                {
+                    'id': payment.id,
+                    'credit_card': payment.credit_card,
+                    'debit_card': payment.debit_card,
+                    'insurance': payment.insurance,
+                    'angel_donation': payment.angel_donation,
+                }
+                for payment in patient.payment_options
+            ]
+
+        }
+            
         patients = Patient.query.all()
         patient_list = []
 
@@ -346,10 +360,12 @@ class SpecialtyResource(Resource):
             specialty = Specialty.query.get(specialty_id)
             if not specialty:
                 return ({'message': 'Specialty not found'}), 404
-            return {'id': specialty.id, 'specialty': specialty.specialty}
+            return {'id': specialty.id, 'specialty': specialty.specialty, 'doctor_count': len(specialty.doctors)}
+        
         specialties = Specialty.query.all()
         return [{'id': specialty.id,
                  'specialty': specialty.specialty,
+                 'doctor_count': len(specialty.doctors),
                  'doctors': [{
                         'id': doctor.id,
                         'name': doctor.name,
@@ -379,7 +395,7 @@ class SpecialtyResource(Resource):
         db.session.delete(specialty)
         db.session.commit()
         return {'message': 'Specialty deleted'}
-
+    
 class PaymentOptionResource(Resource):
     def get(self, payment_option_id=None):
         if payment_option_id:
@@ -392,7 +408,8 @@ class PaymentOptionResource(Resource):
                 'debit_card': payment_option.debit_card,
                 'insurance': payment_option.insurance,
                 'angel_donation': payment_option.angel_donation,
-                'patient_id': payment_option.patient_id,
+   
+             'patient_id': payment_option.patient_id,
                 'patient': {
                     'name': payment_option.patient.name,
                     'phone_no': payment_option.patient.phone_no,
